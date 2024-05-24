@@ -1,12 +1,24 @@
-import logo from './logo.svg';
-import './App.css';
-
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import Profile from "./pages/Profile";
+import ForgetPassword from "./pages/ForgetPassword";
+import Offers from "./pages/Offers";
 function App() {
   return (
-   <>
-   <h1 className='text-2xl bg-red-500'>hello</h1>
-   </>
+    <>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/forget-password" element={<ForgetPassword />} />
+          <Route path="/offers" element={<Offers />} />
+        </Routes>
+      </Router>
+    </>
   );
 }
-
 export default App;
