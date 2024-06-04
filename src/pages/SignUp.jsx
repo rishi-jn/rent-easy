@@ -38,7 +38,7 @@ export default function SignUp() {
       const ref=doc(db,"users",user.uid);
       await setDoc(ref,formCopy);
       navigate("/");
-      toast.success("Successfull sing up");
+      toast.success("Successfull sign up");
     } catch (err) {
       toast.error("Invalid Credentials");
     }
@@ -46,7 +46,7 @@ export default function SignUp() {
 
   return (
     <section>
-      <h1 className="font-bold text-center m-3">Sign Up</h1>
+      <h1 className="font-bold text-center m-3 text-3xl">Sign Up</h1>
       <div className="flex justify-center flex-wrap items-center px-6 py-12 max-w-6xl mx-auto">
         <div className="md:w-[67%] lg:w-[50%] mb-12 md:mb-6">
           <img

@@ -2,18 +2,37 @@ import React from "react";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link } from "react-router-dom";
+// import { auth } from "../firebase";
+import { getAuth } from "firebase/auth";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import GLogin from "../components/GLogin";
 export default function SignIn() {
   const [formData, setformData] = useState({ email: "", password: "" });
   const { email, password } = formData;
   const [flag, setflag] = useState(true);
+  const nav = useNavigate();
+  const auth = getAuth();
   const handleChange = (e) => {
     const id = e.target.id;
-    setformData({ [id]: e.target.value });
+    setformData((prev) => ({ ...prev, [id]: e.target.value }));
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      if (result.user) {
+        nav("/");
+        toast.success("Successfully signed in");
+      }
+    } catch (error) {
+      toast.error("Error has occurred");
+    }
   };
   return (
     <section>
-      <h1 className="font-bold text-center m-3">Sign In</h1>
+      <h1 className="font-bold text-center m-3 text-3xl">Sign In</h1>
       <div className="flex justify-center flex-wrap items-center px-6 py-12 max-w-6xl mx-auto">
         <div className="md:w-[67%] lg:w-[50%] mb-12 md:mb-6">
           <img
@@ -23,7 +42,7 @@ export default function SignIn() {
           />
         </div>
         <div className="w-full md:w-[67%] lg:w-[40%] lg:ml-20">
-          <form className="m-3">
+          <form className="m-3" onSubmit={handleSubmit}>
             <input
               className="mb-6 w-full px-4 py-2 text-xl text-gray-600 border-gray-500 rounded transition ease-in-out"
               type="email"
@@ -64,7 +83,7 @@ export default function SignIn() {
                   to="/sign-up"
                   className="text-red-600 hover:text-red-800 transition duration-200 ease-in-out ml-2"
                 >
-                Register
+                  Register
                 </Link>
               </p>
               <p>
@@ -87,10 +106,9 @@ export default function SignIn() {
           after:border-t  after:flex-1   after:border-gray-300"
             >
               <p className="text-center font-semibold mx-4">OR</p>
-            </div> 
-            <GLogin/>
+            </div>
+            <GLogin />
           </form>
-         
         </div>
       </div>
     </section>
