@@ -25,7 +25,7 @@ export default function Header() {
           <img
             src={require("../images/rent-easy-high-resolution-logo.png")}
             alt="logo"
-            className="h-[60px] cursor-pointer p-0 m-0"
+            className="h-[60px] cursor-pointer p-0 m-0 bg-red-500"
             onClick={() => {
               navigator("/");
             }}

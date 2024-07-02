@@ -1,16 +1,29 @@
 import { getAuth, updateProfile } from "firebase/auth";
-import { doc, updateDoc } from "firebase/firestore";
-import React from "react";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import React, { useEffect } from "react";
 import { useState } from "react";
-import { useNavigate} from "react-router";
+import { useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { db } from "../firebase";
 import { FcHome } from "react-icons/fc";
 import { Link } from "react-router-dom";
+
+import ListingItem from "../components/ListingItem";
 export default function Profile() {
   const auth = getAuth();
   const navi = useNavigate();
   const [changeDetail, setchangeDetail] = useState(false);
+  const [listing, setlisting] = useState([]);
+  const [loading, setloading] = useState(true);
   const [data, setdata] = useState({
     name: auth.currentUser.displayName,
     email: auth.currentUser.email,
@@ -29,18 +42,56 @@ export default function Profile() {
       if (auth.currentUser.displayName !== name) {
         await updateProfile(auth.currentUser, { displayName: name });
         const docRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(docRef, { name, });
+        await updateDoc(docRef, { name });
         toast.success("Profile Update successfully");
       }
     } catch (error) {
       toast.error("Profile Not Updated");
     }
   };
+  useEffect(() => {
+    const fetchData = async () => {
+      const listingRef = collection(db, "listings");
+      const q = query(
+        listingRef,
+        where("userRef", "==", auth.currentUser.uid),
+        orderBy("time", "desc")
+      );
+      const queryList = await getDocs(q);
+      const listings = [];
+      queryList.forEach((element) => {
+        return listings.push({ id: element.id, data: element.data() });
+      });
+      setlisting(listings);
+      setloading(false);
+      setTimeout(() => {
+        console.log(listing);
+      }, 5000);
+    };
+    fetchData();
+  }, [auth.currentUser.uid]);
+  const Delete = async (Id) => {
+    const flag = window.confirm("Are you sure?");
+    if (flag) {
+      try {
+        await deleteDoc(doc(db, "listings", Id));
+        const UpdatedListing = listing.filter((lis) => lis.id !== Id);
+        setlisting(UpdatedListing);
+        toast.success("Successfully deleted");
+      } catch (error) {
+        toast.error("Post not Deleted");
+      }
+    }
+  };
+  const Edit = (Id) => {
+    navi(`/edit-listing/${Id}`);
+  };
+
   return (
     <>
       <section className="max-w-6xl mx-auto flex justify-center items-center flex-col">
         <h1 className="text-center mt-6 font-bold text-3xl">My Profile</h1>
-        <div className="w-full md:w-[50%] mt-6 px-3">
+        <div className="w-full md:w-[50%] mt-6 px-3 bg-gray-300 rounded p-5 shadow">
           <form>
             <input
               type="text"
@@ -67,7 +118,7 @@ export default function Profile() {
                     changeDetail && onSubmit();
                     setchangeDetail((prev) => !prev);
                   }}
-                  className="text-red-500 hover:text-red-700 transition ease-in-out duration-200 ml-1 cursor-pointer"
+                  className="text-red-700 hover:text-red-800 transition ease-in-out duration-200 ml-1 cursor-pointer"
                 >
                   {changeDetail ? "Apply changes" : "Edit"}
                 </span>
@@ -82,7 +133,7 @@ export default function Profile() {
           </form>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white uppercase px-7 py-3 text-sm font-medium rounded shadow-md hover:bg-blue-700 transition duration-150 ease-in-out hover:shadow-lg active:bg-blue-800"
+            className="w-full bg-white text-black uppercase px-7 py-3 text-sm font-medium rounded shadow-md hover:bg-red-600 transition duration-150 ease-in-out hover:shadow-lg active:bg-red-700"
           >
             <Link
               to="/create-listing"
@@ -94,6 +145,26 @@ export default function Profile() {
           </button>
         </div>
       </section>
+      <div className="max-w-6xl px-3 mt-6 mx-auto">
+        {!loading && listing.length > 0 && (
+          <>
+            <h1 className="text-2xl text-center font-semibold">My Listings</h1>
+            <ul className="sm:grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {listing.map((lis) => {
+                return (
+                  <ListingItem
+                    key={lis.id}
+                    id={lis.id}
+                    listing={lis.data}
+                    Delete={() => Delete(lis.id)}
+                    Edit={() => Edit(lis.id)}
+                  />
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </div>
     </>
   );
 }

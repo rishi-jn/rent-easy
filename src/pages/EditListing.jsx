@@ -1,15 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Spinner from "../components/Spinner";
 import { toast } from "react-toastify";
 import { v4 as uuidv4 } from "uuid";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 export default function CreateListing() {
   const [loading, setloading] = useState(false);
+  const [listing, setlisting] = useState([]);
+  const [prevImg, setprevImg] = useState({});
   const auth = getAuth();
   const [geolocationEnabled, setGeolocationEnabled] = useState(true);
   const navigate = useNavigate();
@@ -112,6 +114,8 @@ export default function CreateListing() {
         );
       });
     }
+    setprevImg({...prevImg,images});
+    console.log(prevImg);
     const imgUrls = await Promise.all(
       [...images].map((image) => storeImage(image))
     ).catch((error) => {
@@ -127,18 +131,36 @@ export default function CreateListing() {
       userRef: auth.currentUser.uid,
     };
     !formDataCopy.offer && delete formDataCopy.discountedPrice;
-    delete formDataCopy.images;
-    const docRef = await addDoc(collection(db, "listings"), formDataCopy);
+    delete formDataCopy.images; 
+    const docRef = doc(db,"listings",param.listingId);
+    await updateDoc(docRef,formDataCopy);
     setloading(false);
-    toast.success("Listing created");
+    toast.success("Listing Edited");
     navigate(`/category/${formDataCopy.type}/${docRef.id}`);
   };
+  const param=useParams();
+  useEffect(() => {
+     const fetchListing= async()=>{
+        const docRef=doc(db,"listings",param.listingId);
+        const Doc=await getDoc(docRef);
+         if(Doc.data().userRef!==auth.currentUser.uid){
+            toast.error("Can't Edit this listing");
+            navigate("/");
+        }
+        setlisting(Doc.data());
+        setFormData({...Doc.data()});
+        setprevImg({...Doc.data().imgUrls});
+        
+     }
+     fetchListing();
+  }, [])
+  
   if (loading) {
     return <Spinner />;
   }
   return (
     <main className="max-w-md px-2 mx-auto">
-      <h1 className="text-3xl text-center mt-6 font-bold">Create a Listing</h1>
+      <h1 className="text-3xl text-center mt-6 font-bold">Edit Listing</h1>
       <form onSubmit={handleSubmit}>
         <p className="text-lg mt-6 font-semibold">Sell / Rent</p>
         <div className="flex">
@@ -281,7 +303,7 @@ export default function CreateListing() {
                 required
                 min="-90"
                 max="90"
-                step='0.001'
+                step="0.00001"
                 className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:bg-white focus:text-gray-700 focus:border-slate-600 text-center"
               />
             </div>
@@ -295,7 +317,7 @@ export default function CreateListing() {
                 required
                 min="-180"
                 max="180"
-                  step='0.001'
+                step="0.00001"
                 className="w-full px-4 py-2 text-xl text-gray-700 bg-white border border-gray-300 rounded transition duration-150 ease-in-out focus:bg-white focus:text-gray-700 focus:border-slate-600 text-center"
               />
             </div>
@@ -403,7 +425,7 @@ export default function CreateListing() {
           type="submit"
           className="mb-6 w-full px-7 py-3 bg-blue-600 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg focus:bg-blue-700 focus:shadow-lg active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out"
         >
-          Create Listing
+          Edit Listing
         </button>
       </form>
     </main>
